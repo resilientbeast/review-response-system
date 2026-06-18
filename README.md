@@ -2,11 +2,32 @@
 
 An automated, multi-agent AI pipeline for processing customer reviews. Specialized agents (monitor, triage, research, drafter, QA) collaborate via websockets to ingest feedback, gather context, and generate brand-compliant, personalized responses. Includes a real-time React dashboard and FastAPI backend to track the entire review lifecycle.
 
+![Demo of Review Response System](demo.gif)
+*(Replace this placeholder with a 15-second demo GIF showing a review card moving through the kanban columns and the QA panel populating)*
+
 ---
 
 ## 🏗️ Architecture Overview
 
 The system is built on a **multi-agent architecture** utilizing the Band.ai platform for secure, stateful WebSocket communication between agents. 
+
+```text
+[Incoming Review] 
+       │
+       ▼
+ ┌───────────┐      ┌──────────┐      ┌────────────┐      ┌───────────┐
+ │  Monitor  │ ───► │  Triage  │ ───► │  Research  │ ───► │  Drafter  │
+ └───────────┘      └──────────┘      └────────────┘      └─────┬─────┘
+                                                                │
+                                                                ▼
+ ┌────────────┐                                           ┌───────────┐
+ │ Escalation │ ◄──────────────────────────────────────── │    QA     │
+ └────────────┘                 (Approved)                └─────┬─────┘
+       ▲                                                        │
+       │                                                        │
+       └────────────────────────────────────────────────────────┘
+                      (Revision Needed / Hard Fail)
+```
 
 ### The Agents
 1. **Monitor Agent** 📡: The entry point. It receives webhooks or direct injections, parses the review, extracts basic sentiment, and initiates the pipeline envelope.
@@ -16,7 +37,7 @@ The system is built on a **multi-agent architecture** utilizing the Band.ai plat
 5. **QA Agent** ⚖️: Strictly reviews the draft against 10 brand voice and compliance checks (e.g., `addresses_core_complaint`, `no_legal_liability_admission`). It computes a weighted score and can **bounce the draft back to the Drafting Agent** for revision if it hard fails or scores below the threshold.
 
 ### The Dashboard
-- **Frontend**: A React (Vite) application that visualizes the pipeline. It features a live DAG (Directed Acyclic Graph) view using Server-Sent Events (SSE) to animate reviews as they flow through the agents.
+- **Frontend**: A React (Vite) application that visualizes the pipeline. It features a real-time kanban pipeline view using Server-Sent Events (SSE) to animate reviews as they flow through the agents.
 - **Backend Bridge**: A FastAPI application that securely bridges the Band.ai agent webhooks to the frontend dashboard.
 
 ---
@@ -113,6 +134,16 @@ uv run uvicorn ingestion.receiver:app --port 8000
 - `/shared`: Shared schemas, models, and base agent configurations.
 - `/data` & `/migrations`: SQLite database files and SQL migrations.
 - `run_all.py`: Orchestration script to run all agents simultaneously.
+
+---
+
+## Roadmap
+
+- [ ] Google Business Profile webhook integration (Pub/Sub)
+- [ ] Yelp Fusion polling (15-min cron)
+- [ ] TripAdvisor Content API webhook
+- [ ] Slack notifications for escalated reviews
+- [ ] Email alerts via SendGrid/SMTP
 
 ---
 

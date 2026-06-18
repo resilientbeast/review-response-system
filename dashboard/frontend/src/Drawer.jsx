@@ -225,8 +225,8 @@ function ReasoningTrailPanel({ history, status }) {
                   <span className={`font-bold ${getAgentColor(event.agent)} uppercase`}>{event.agent}</span>
                   <span className="text-textMuted">{timeStr}</span>
                 </div>
-                <div className="text-textPrimary leading-tight mb-0.5">{event.action}</div>
-                {event.note && <div className="text-textSub text-[8px] leading-tight">{event.note}</div>}
+                <div className="text-textPrimary leading-tight mb-0.5">{event.trail_entry?.action || event.action}</div>
+                {(event.trail_entry?.note || event.note) && <div className="text-textSub text-[8px] leading-tight">{event.trail_entry?.note || event.note}</div>}
               </div>
             </div>
           );
@@ -242,7 +242,8 @@ function QAPanel({ qa, isPublished }) {
     return <div className="flex-1 p-4 text-textMuted font-mono text-xs flex items-center justify-center">// awaiting QA agent</div>;
   }
 
-  const score = qa.qa_score ?? qa.overall_score ?? 0;
+  const rawScore = qa.qa_score ?? qa.overall_score ?? 0;
+  const score = rawScore <= 1 ? Math.round(rawScore * 100) : rawScore;
   const verdict = qa.qa_verdict ?? (qa.passed ? 'approved' : 'rejected');
   
   let scoreColor = 'bg-rose';

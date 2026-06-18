@@ -14,6 +14,21 @@ from agents.qa import run as qa_run
 from agents.escalation import run as escalation_run
 
 
+async def run_agent_with_restart(agent_coro_func, name: str):
+    log = logging.getLogger("run_all")
+    while True:
+        try:
+            log.info(f"Starting agent: {name}")
+            await agent_coro_func()
+            log.warning(f"Agent '{name}' completed normally (unexpected). Restarting in 5s...")
+        except asyncio.CancelledError:
+            log.info(f"Agent '{name}' was cancelled.")
+            break
+        except Exception as e:
+            log.error(f"Agent '{name}' crashed: {e}. Restarting in 5s...", exc_info=True)
+        
+        await asyncio.sleep(5)
+
 async def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -23,26 +38,21 @@ async def main():
     log.info("Starting all 6 agents...")
 
     tasks = [
-        asyncio.create_task(monitor_run(),     name="monitor"),
-        asyncio.create_task(triage_run(),      name="triage"),
-        asyncio.create_task(research_run(),    name="research"),
-        asyncio.create_task(drafting_run(),    name="drafting"),
-        asyncio.create_task(qa_run(),          name="qa"),
-        asyncio.create_task(escalation_run(),  name="escalation"),
+        asyncio.create_task(run_agent_with_restart(monitor_run, "monitor"), name="monitor"),
+        asyncio.create_task(run_agent_with_restart(triage_run, "triage"), name="triage"),
+        asyncio.create_task(run_agent_with_restart(research_run, "research"), name="research"),
+        asyncio.create_task(run_agent_with_restart(drafting_run, "drafting"), name="drafting"),
+        asyncio.create_task(run_agent_with_restart(qa_run, "qa"), name="qa"),
+        asyncio.create_task(run_agent_with_restart(escalation_run, "escalation"), name="escalation"),
     ]
 
     log.info("All 6 agents launched. Waiting for tasks...")
-
-    # If any agent crashes, log it but keep the rest running
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
-    for task in done:
-        if task.exception():
-            log.error(f"Agent '{task.get_name()}' crashed: {task.exception()}")
-
-    # Cancel remaining tasks on first crash
-    for task in pending:
-        task.cancel()
-
+    
+    # Wait for all tasks to complete (they run infinitely until cancelled)
+    await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nShutdown requested by user.")

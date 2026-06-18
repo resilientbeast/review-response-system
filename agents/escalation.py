@@ -87,6 +87,7 @@ class EscalationAdapter(ReviewAgentAdapter):
         if envelope.qa and envelope.qa.passed and not envelope.escalation.required:
             envelope.final_response = envelope.draft.response_text
             envelope.published_at = datetime.now(timezone.utc).isoformat()
+            envelope.status = "published"
             envelope_dict = envelope.model_dump()
             envelope_dict = update_status(envelope_dict, "published")
             save_approved_response(DB_PATH, envelope_dict)

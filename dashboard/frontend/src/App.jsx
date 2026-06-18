@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Drawer from './Drawer';
 
-const AGENT_STAGES = ['monitor', 'triage', 'research', 'drafter', 'qa', 'escalation', 'system'];
+const AGENT_STAGES = ['monitor', 'triage', 'research', 'drafter', 'qa', 'escalation'];
 
 export default function App() {
   const [reviews, setReviews] = useState({});
@@ -49,14 +49,14 @@ export default function App() {
               ...rev,
               currentAgent: newAgent,
               status: newStatus,
-              action: data.action || rev.action,
-              note: data.note || rev.note,
-              confidence: data.confidence || rev.confidence,
+              action: data.trail_entry?.action || data.action || rev.action,
+              note: data.trail_entry?.note || data.note || rev.note,
+              confidence: data.trail_entry?.confidence || data.confidence || rev.confidence,
               draftText: data.draft_text || rev.draftText,
               qaResult: data.qa_result || rev.qaResult,
-              envelope: data.envelope || rev.envelope,
+              envelope: data.envelope_snapshot || rev.envelope,
               history: newHistory,
-              published: data.published || rev.published
+              published: data.meta?.published || data.published || rev.published
             }
           };
         });
@@ -103,8 +103,9 @@ export default function App() {
 
   const getReviewsInStage = (stage) => {
     return Object.values(reviews).filter(r => {
-      if (stage === 'system' && r.published) return true;
-      if (r.published) return false;
+      if (r.published || r.currentAgent === 'system') {
+        return stage === 'escalation';
+      }
       return r.currentAgent === stage;
     });
   };

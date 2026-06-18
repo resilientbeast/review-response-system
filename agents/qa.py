@@ -102,8 +102,10 @@ class QAAdapter(ReviewAgentAdapter):
         feedback_given = qa_result["feedback"] is not None
         if qa_result["passed"] and not feedback_given:
             route_to = "escalation" # Escalation handles publishing / final check
-            status_update = "qa_review"
+            status_update = "approved"
             qa_data.feedback_to_drafter = None # Clear feedback if passed
+            envelope.status = "approved"
+            envelope.final_response = envelope.draft.response_text
         else:
             if qa_result["hard_fail_triggers"] or revision_count >= 2:
                 route_to = "escalation"
