@@ -1,0 +1,36 @@
+# Band SDK config — keys are agent_id and api_key
+# Get these from Band dashboard → Agents → [agent name] → Settings
+# BAND_OWNER_HANDLE is your Band username handle
+# Used to build mention strings like "@yourhandle/triage-agent"
+
+band_owner_handle: "your_band_handle_here"
+
+monitor:
+  agent_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  api_key: "band_sk_xxxxxxxxxxxxxxxx"
+  band_name: "monitor-agent"
+
+triage:
+  agent_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  api_key: "band_sk_xxxxxxxxxxxxxxxx"
+  band_name: "triage-agent"
+
+research:
+  agent_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  api_key: "band_sk_xxxxxxxxxxxxxxxx"
+  band_name: "research-agent"
+
+drafting:
+  agent_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  api_key: "band_sk_xxxxxxxxxxxxxxxx"
+  band_name: "drafting-agent"
+
+qa:
+  agent_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  api_key: "band_sk_xxxxxxxxxxxxxxxx"
+  band_name: "qa-agent"
+
+escalation:
+  agent_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  api_key: "band_sk_xxxxxxxxxxxxxxxx"
+  band_name: "escalation-agent"

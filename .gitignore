@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+venv/
+
+# Secrets — never commit
+.env
+agent_config.yaml
+
+# Spec and unused files
+BIN/
+
+# Data directories
+data/
+*.db
+*.sqlite3

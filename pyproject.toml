@@ -1,0 +1,18 @@
+[project]
+name = "review-response-system"
+version = "0.1.0"
+description = "Multi-agent review response system for the Band of Agents Hackathon"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.14.1",
+    "aiohttp-cors>=0.8.1",
+    "band-sdk[anthropic]>=1.0.0",
+    "fastapi>=0.137.1",
+    "httpx>=0.28.1",
+    "openai>=1.30.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+    "uvicorn>=0.49.0",
+]
