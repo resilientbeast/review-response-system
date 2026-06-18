@@ -82,7 +82,7 @@ const SEED_REVIEWS = [
   },
   {
     id: "seed_05",
-    label: "Mixed — Great food, poor service",
+    label: "Mixed — Low confidence escalation",
     stars: 3,
     badge: "MIXED",
     badgeColor: "violet",
@@ -315,7 +315,7 @@ function ReviewCard({ review, isActive, onClick }) {
       <div className="flex justify-between items-start text-[10px]">
         <div className="font-bold text-violet">{platform}</div>
         <div className="text-amber font-mono">
-          {'★'.repeat(rating)}{'☆'.repeat(5-rating)}
+          {'★'.repeat(rating)}<span className="opacity-30">{'★'.repeat(5-rating)}</span>
         </div>
       </div>
       
@@ -396,7 +396,7 @@ function InjectModal({ onClose, onInject }) {
                 <div className="flex-1 flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span className="text-amber text-sm font-mono tracking-tighter">
-                      {'★'.repeat(scenario.stars)}{'☆'.repeat(5 - scenario.stars)}
+                      {'★'.repeat(scenario.stars)}<span className="opacity-30">{'★'.repeat(5 - scenario.stars)}</span>
                     </span>
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${badgeClass}`}>
                       {scenario.badge}
