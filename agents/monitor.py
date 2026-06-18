@@ -93,16 +93,18 @@ async def inject_review_handler(request):
     except Exception as e:
         return web.json_response({"error": str(e)}, status=400)
 
+    review_data = data.get("review", {})
+    
     envelope = ReviewEnvelope(
         review_id=f"REV-{uuid.uuid4().hex[:6].upper()}",
-        platform="google",
-        business_id="loc_demo",
+        platform=data.get("platform", "google"),
+        business_id=data.get("business_id", "loc_demo"),
         status="ingested",
         review=ReviewData(
-            author=data.get("reviewer_name", "Demo User"),
-            rating=int(data.get("rating", 3)),
-            text=data.get("text", ""),
-            url="http://demo.platform",
+            author=review_data.get("author", "Demo User"),
+            rating=int(review_data.get("rating", 3)),
+            text=review_data.get("text", ""),
+            url=review_data.get("url", "http://demo.platform"),
             timestamp=datetime.datetime.utcnow().isoformat()
         )
     )
