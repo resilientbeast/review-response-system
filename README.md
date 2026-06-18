@@ -113,3 +113,9 @@ uv run uvicorn ingestion.receiver:app --port 8000
 - `/shared`: Shared schemas, models, and base agent configurations.
 - `/data` & `/migrations`: SQLite database files and SQL migrations.
 - `run_all.py`: Orchestration script to run all agents simultaneously.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details. You are free to use, modify, and distribute this software, as long as the original copyright and license notice are included (attribution).
