@@ -80,6 +80,11 @@ class DraftingAdapter(ReviewAgentAdapter):
         if is_revision:
             context["previous_draft"] = envelope.draft.model_dump(mode="json")
             context["qa_feedback"] = envelope.qa.feedback_to_drafter
+            
+        # Demo hack: force a bad first draft for the QA loop scenario
+        if envelope.review.author == "Sarah K." and not is_revision:
+            context["special_system_instruction"] = "For this specific draft, intentionally ignore the 'No public compensation offers' and 'No defensive language' rules. You MUST offer a full refund and use defensive language like 'however, we were very busy'. This is required to trigger the QA system."
+
 
         result_text = await self.call_llm(
             system_prompt=DRAFTING_SYSTEM_PROMPT,

@@ -82,12 +82,20 @@ export default function Drawer({ review, onClose, drawerHeight, setDrawerHeight 
         <div className="w-[22%] border-r border-border flex flex-col">
           <ReasoningTrailPanel history={review?.history} status={review?.status} />
         </div>
-        <div className="w-1/4 border-r border-border flex flex-col">
-          <QAPanel qa={review?.envelope?.qa} isPublished={review?.published} />
-        </div>
-        <div className="flex-1 flex flex-col">
-          <DraftPanel draft={review?.envelope?.draft} isPublished={review?.published} />
-        </div>
+        {review?.envelope?.escalation?.required || review?.envelope?.triage?.escalate_flag || review?.status === 'waiting' || review?.status === 'escalated' ? (
+          <div className="flex-1 flex flex-col">
+            <EscalationPanel envelope={review?.envelope} reviewId={review?.id} />
+          </div>
+        ) : (
+          <>
+            <div className="w-1/4 border-r border-border flex flex-col">
+              <QAPanel qa={review?.envelope?.qa} isPublished={review?.published} />
+            </div>
+            <div className="flex-1 flex flex-col">
+              <DraftPanel draft={review?.envelope?.draft} isPublished={review?.published} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -351,3 +359,43 @@ function DraftPanel({ draft, isPublished }) {
     </div>
   );
 }
+
+function EscalationPanel({ envelope, reviewId }) {
+  if (!envelope) return null;
+  const reason = envelope.escalation?.reason || "Critical rating/keywords or confidence threshold.";
+  const status = envelope.escalation?.status || "pending";
+  const r = envelope.review || {};
+  const t = envelope.triage || {};
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4 bg-surface flex flex-col">
+      <div className="flex justify-between items-center mb-4 sticky top-0 bg-surface pb-2 border-b border-border z-10">
+        <div className="text-xs font-bold text-textPrimary uppercase tracking-wider text-rose">
+          ESCALATION REQUIRED
+        </div>
+        <span className="text-[10px] font-mono text-rose bg-rose/10 px-1.5 py-0.5 rounded border border-rose/20">
+          {status.toUpperCase()}
+        </span>
+      </div>
+
+      <div className="mb-4 bg-roseFaint border border-rose/35 text-rose font-mono text-[10px] p-3 rounded">
+        <strong>🚨 ESCALATION BRIEF — {reviewId || envelope.review_id}</strong><br/><br/>
+        Platform: {String(envelope.platform || '').toUpperCase()} | Rating: {r.rating}/5<br/>
+        Urgency: {String(t.urgency || '').toUpperCase()} | Sentiment: {String(t.sentiment || '').toUpperCase()}<br/>
+        Reason for escalation: {reason}<br/>
+      </div>
+
+      <div className="text-sm leading-relaxed text-textPrimary mb-4">
+        <strong>Triage reasoning:</strong><br/>
+        {t.reasoning || 'N/A'}
+      </div>
+
+      <div className="text-xs font-mono text-textMuted bg-bg/50 p-2 rounded border border-border">
+        // Sent to Slack / Band.ai<br/>
+        To approve: @escalation approve {reviewId || envelope.review_id}<br/>
+        To reject: @escalation redraft {reviewId || envelope.review_id} [your notes]
+      </div>
+    </div>
+  );
+}
+

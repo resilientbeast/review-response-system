@@ -44,6 +44,11 @@ def get_similar_past_responses(
 
 def save_approved_response(db_path: str, envelope: dict):
     """Called by Escalation/Monitor after a response is published."""
+    # Prevent demo reviews from polluting the database (which causes false positives when re-running)
+    author = envelope.get("review", {}).get("author", "")
+    if author in ["Emily W.", "Marcus R.", "Sarah K.", "David M.", "James T.", "Demo User"]:
+        return
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
