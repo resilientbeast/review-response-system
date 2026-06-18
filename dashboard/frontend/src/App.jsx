@@ -3,11 +3,111 @@ import Drawer from './Drawer';
 
 const AGENT_STAGES = ['monitor', 'triage', 'research', 'drafter', 'qa', 'escalation'];
 
+const SEED_REVIEWS = [
+  {
+    id: "seed_01",
+    label: "Positive — Glowing 5-star compliment",
+    stars: 5,
+    badge: "FAST PATH",
+    badgeColor: "emerald",
+    preview: "Absolutely wonderful evening! The risotto was the best...",
+    payload: {
+      platform: "google",
+      business_id: "loc_demo",
+      review: {
+        text: "Absolutely wonderful evening! The risotto was the best I have had in London. Staff were incredibly attentive and remembered my partner's dietary requirement without being asked twice. Already booked for next month.",
+        rating: 5,
+        author: "Emily W.",
+        url: "http://demo.platform",
+        language: "en",
+      },
+    },
+  },
+  {
+    id: "seed_02",
+    label: "Complaint — Wait time + cold food",
+    stars: 2,
+    badge: "STANDARD PATH",
+    badgeColor: "blue",
+    preview: "Waited 45 minutes for our table despite having a reservation...",
+    payload: {
+      platform: "google",
+      business_id: "loc_demo",
+      review: {
+        text: "Waited 45 minutes for our table despite having a reservation. When the food arrived it was lukewarm. Staff were apologetic but couldn't do much. Won't be returning.",
+        rating: 2,
+        author: "Marcus R.",
+        url: "http://demo.platform",
+        language: "en",
+      },
+    },
+  },
+  {
+    id: "seed_03",
+    label: "QA Loop — Triggers revision cycle",
+    stars: 1,
+    badge: "QA REVISION",
+    badgeColor: "amber",
+    preview: "Worst experience of my life. The manager was dismissive...",
+    payload: {
+      platform: "tripadvisor",
+      business_id: "loc_demo",
+      review: {
+        text: "Worst experience of my life. The manager was completely dismissive when I raised my concerns. The food was inedible and no one seemed to care. I will be leaving reviews everywhere I can.",
+        rating: 1,
+        author: "Sarah K.",
+        url: "http://demo.platform",
+        language: "en",
+      },
+    },
+  },
+  {
+    id: "seed_04",
+    label: "Escalation — Legal threat",
+    stars: 1,
+    badge: "ESCALATION",
+    badgeColor: "rose",
+    preview: "I will be contacting my solicitor regarding the allergic reaction...",
+    payload: {
+      platform: "google",
+      business_id: "loc_demo",
+      review: {
+        text: "I will be contacting my solicitor regarding the allergic reaction my daughter had after eating here despite us clearly flagging her nut allergy at the time of booking. This is completely unacceptable and potentially dangerous.",
+        rating: 1,
+        author: "David M.",
+        url: "http://demo.platform",
+        language: "en",
+      },
+    },
+  },
+  {
+    id: "seed_05",
+    label: "Mixed — Great food, poor service",
+    stars: 3,
+    badge: "MIXED",
+    badgeColor: "violet",
+    preview: "The food was genuinely excellent but the service let it down...",
+    payload: {
+      platform: "yelp",
+      business_id: "loc_demo",
+      review: {
+        text: "The food was genuinely excellent — best steak I have had in years. But the service let it down badly. We waited 20 minutes to be acknowledged after sitting down and had to ask three times for the bill. Would return for the food but the front-of-house needs serious attention.",
+        rating: 3,
+        author: "James T.",
+        url: "http://demo.platform",
+        language: "en",
+      },
+    },
+  },
+];
+
 export default function App() {
   const [reviews, setReviews] = useState({});
   const [connected, setConnected] = useState(false);
   const [activeReviewId, setActiveReviewId] = useState(null);
   const [drawerHeight, setDrawerHeight] = useState(45);
+  const [showModal, setShowModal] = useState(false);
+  const [injectStatus, setInjectStatus] = useState("idle");
 
   useEffect(() => {
     // We connect to the bridge running on port 8001
@@ -34,14 +134,8 @@ export default function App() {
           // Append to history
           const newHistory = [...rev.history, data];
           
-          // Determine current agent
-          // For system publish, we might just set it to system
           let newAgent = data.agent;
           let newStatus = data.status;
-          
-          // If a done event has an edge, we could visually move it to the edge destination as 'waiting' 
-          // or just leave it in current agent as 'done' until the next agent picks it up.
-          // Leaving it in current agent as 'done' is better.
 
           return {
             ...prev,
@@ -70,30 +164,36 @@ export default function App() {
     };
   }, []);
 
-  const injectMock = async () => {
+  const injectMock = async (payload) => {
+    setShowModal(false);
+    setInjectStatus("loading");
+
     try {
-      const mockData = {
-        reviewer_name: "Marcus R.",
-        rating: 2,
-        text: "Waited 45 minutes for our table despite having a reservation. When the food arrived it was lukewarm. Staff were apologetic but couldn't do much. Won't be returning."
-      };
+      // dynamically set timestamp
+      payload.review.timestamp = new Date().toISOString();
       
       const res = await fetch('http://localhost:8002/inject', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockData)
+        body: JSON.stringify(payload)
       });
       
       if (!res.ok) {
         console.warn("Local injection failed, trying webhook receiver fallback...");
-        await fetch('http://localhost:8000/demo/inject', { 
+        const fallbackRes = await fetch('http://localhost:8000/demo/inject', { 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(mockData)
+          body: JSON.stringify(payload)
         });
+        if (!fallbackRes.ok) throw new Error(`${fallbackRes.status}`);
       }
+      
+      setInjectStatus("success");
+      setTimeout(() => setInjectStatus("idle"), 2000);
     } catch (e) {
       console.error("Failed to inject", e);
+      setInjectStatus("error");
+      setTimeout(() => setInjectStatus("idle"), 3000);
     }
   };
 
@@ -121,10 +221,16 @@ export default function App() {
           </div>
         </div>
         <button 
-          onClick={injectMock}
-          className="bg-blue hover:bg-blue/80 text-bg font-semibold py-2 px-4 rounded transition-colors"
+          onClick={() => setShowModal(true)}
+          className={`font-semibold py-2 px-4 rounded transition-colors ${
+            injectStatus === 'success' ? 'bg-emerald text-bg' :
+            injectStatus === 'error' ? 'bg-rose text-bg' :
+            'bg-blue hover:bg-blue/80 text-bg'
+          }`}
         >
-          Inject Review
+          {injectStatus === 'success' ? '✓ Injected' :
+           injectStatus === 'error' ? '⚠ Offline' :
+           'Inject Review'}
         </button>
       </header>
 
@@ -159,6 +265,13 @@ export default function App() {
         drawerHeight={drawerHeight}
         setDrawerHeight={setDrawerHeight}
       />
+
+      {showModal && (
+        <InjectModal 
+          onClose={() => setShowModal(false)} 
+          onInject={injectMock} 
+        />
+      )}
     </div>
   );
 }
@@ -219,6 +332,106 @@ function ReviewCard({ review, isActive, onClick }) {
         {pill && <div className={`${pillColor}`}>{pill}</div>}
       </div>
 
+    </div>
+  );
+}
+
+function InjectModal({ onClose, onInject }) {
+  const [selectedId, setSelectedId] = useState("seed_02");
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  const selectedScenario = SEED_REVIEWS.find(s => s.id === selectedId);
+
+  return (
+    <div 
+      className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-surface border border-border rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-border flex justify-between items-center bg-bg/50 rounded-t-lg">
+          <h2 className="text-lg font-bold text-textPrimary tracking-wide">Select Review Scenario</h2>
+          <button onClick={onClose} className="text-textSub hover:text-rose transition-colors text-xl font-bold">✕</button>
+        </div>
+        
+        <div className="p-4 overflow-y-auto space-y-2 flex-1">
+          {SEED_REVIEWS.map((scenario) => {
+            const isSelected = selectedId === scenario.id;
+            
+            const badgeColors = {
+              emerald: 'bg-emerald text-bg',
+              blue: 'bg-blue text-bg',
+              amber: 'bg-amber text-bg',
+              rose: 'bg-rose text-bg',
+              violet: 'bg-violet text-bg',
+            };
+            const badgeClass = badgeColors[scenario.badgeColor] || badgeColors.blue;
+            
+            return (
+              <div 
+                key={scenario.id} 
+                onClick={() => setSelectedId(scenario.id)}
+                className={`p-3 rounded-lg border transition-all cursor-pointer flex gap-3 items-start ${
+                  isSelected 
+                    ? 'border-amber bg-amberFaint' 
+                    : 'border-border bg-surface hover:border-amber/50'
+                }`}
+              >
+                <div className="mt-1 flex-shrink-0">
+                  <div className={`w-3 h-3 rounded-full border ${
+                    isSelected ? 'bg-amber border-amber' : 'border-textSub/50 bg-transparent'
+                  }`} />
+                </div>
+                
+                <div className="flex-1 flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber text-sm font-mono tracking-tighter">
+                      {'★'.repeat(scenario.stars)}{'☆'.repeat(5 - scenario.stars)}
+                    </span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${badgeClass}`}>
+                      {scenario.badge}
+                    </span>
+                  </div>
+                  
+                  <div className="text-[13px] font-bold text-textPrimary">
+                    {scenario.label}
+                  </div>
+                  
+                  <div className="text-[11px] text-textSub italic line-clamp-1">
+                    "{scenario.preview}"
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="p-4 border-t border-border bg-bg/50 rounded-b-lg flex justify-end gap-3">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-semibold text-textSub hover:text-textPrimary transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={() => onInject(selectedScenario?.payload)}
+            disabled={!selectedId}
+            className="px-4 py-2 text-sm font-semibold bg-amber hover:bg-amber/80 text-bg disabled:bg-border disabled:text-textSub rounded transition-colors"
+          >
+            Inject Selected →
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
