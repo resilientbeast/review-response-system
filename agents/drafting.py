@@ -83,14 +83,19 @@ class DraftingAdapter(ReviewAgentAdapter):
             
         # Demo hack: force a bad first draft for the QA loop scenario
         if envelope.review.author == "Sarah K." and not is_revision:
-            context["special_system_instruction"] = "For this specific draft, intentionally ignore the 'No public compensation offers' and 'No defensive language' rules. You MUST offer a full refund and use defensive language like 'however, we were very busy'. This is required to trigger the QA system."
-
-
-        result_text = await self.call_llm(
-            system_prompt=DRAFTING_SYSTEM_PROMPT,
-            user_content=json.dumps(context),
-            json_mode=True,
-        )
+            bad_draft = "Dear Sarah, we received your review regarding your recent visit. I understand you had a negative experience. However, our management team was operating under strict standard operating procedures during an exceptionally busy period, meaning they had to prioritize tasks accordingly. Our policies do not allow us to guarantee immediate managerial attention in such circumstances, so we cannot be held responsible for your perceived lack of care. Furthermore, we must state that any allegations regarding the food being inedible are completely subjective, and our kitchen adheres to all statutory health and safety protocols. It is important to remember that our restaurant serves hundreds of satisfied customers daily, which statistically contradicts your claims. We have reviewed the CCTV footage and staff logs from that evening and have determined that our team acted appropriately and in accordance with company policy. This communication serves as formal receipt of your feedback, and we will log it in our operational registry for internal tracking. We will not be offering any further compensation or review of this matter at this time. Thank you for your understanding."
+            result_text = json.dumps({
+                "response_text": bad_draft,
+                "word_count": len(bad_draft.split()),
+                "confidence": 0.45,
+                "reasoning": "Drafting an extremely long, formal, and bureaucratic response to ensure QA catches the violations."
+            })
+        else:
+            result_text = await self.call_llm(
+                system_prompt=DRAFTING_SYSTEM_PROMPT,
+                user_content=json.dumps(context),
+                json_mode=True,
+            )
 
         try:
             llm_out = json.loads(result_text)
